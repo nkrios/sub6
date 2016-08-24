@@ -1,5 +1,4 @@
 # !/bin/python
-import requests
 import sys
 import os
 import httplib
