@@ -1,5 +1,4 @@
-#! /bin/python
-
+# !/bin/python
 import requests
 import sys
 import os
@@ -21,6 +20,7 @@ class STX:
     Green='\033[1;32m'
     White='\033[1;37m'
     lin="_________________________________________________________________________________________________"
+    heroku='no such app'
     me='Sub6.py'
 
 
@@ -35,7 +35,7 @@ def defit():
 
 
 def Leav(s):
-	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'+str(count)
+	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'
 	exit();
 
 def printnote(s):
@@ -57,13 +57,16 @@ def Investigate(ur,indx):
 		conn.request("GET","/index.html")
 		conn.sock.settimeout(5.0)
 		res = conn.getresponse()
-		print str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(res.read()))+"]"
+		source=res.read()
+		print str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(source))+"]"
 		redirectlink=res.getheader('location')
 		server=res.getheader('server')
 		if "None" not in str(redirectlink) :
 			print STX.WARNING+"Redirects to > "+redirectlink+STX.Green
 		if "None" not in str(server):
 			print STX.Blue+"Server = "+str(server)+STX.Green
+		if STX.heroku in res.lower():
+			print STX.UNDERlinE+"Heroku detected"+STX.Green
 
 	except Exception, e:
 		if "nor servname provided, or not known" in str(e):
@@ -88,8 +91,8 @@ def execNow():
 
 
 	if len(sys.argv) < 2:
-		print len(sys.argv)
-		Leav("\n Usage "+me+" list.txt\n")
+		print STX.lin
+		Leav("\n +Usage     "+STX.me+"  [file] \n            "+STX.Green+STX.me+"  list.txt\n")
 	
 
 	filepath = sys.argv[1]
@@ -126,6 +129,7 @@ print"""
                                 \/          \/       \/ 
 
 Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
+					This is BETA , Tools still under Development
 """
 if __name__ == '__main__':
     defit()
