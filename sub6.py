@@ -24,6 +24,7 @@ class STX:
     Green='\033[1;32m'
     White='\033[1;37m'
     lin="_________________________________________________________________________________________________"
+    havlin='----------------------------'
     me='Sub6.py'
 
 
@@ -126,7 +127,7 @@ def execNow():
 
 	filepath = sys.argv[1]
 	if os.path.isfile(filepath) is False:
-		Leav(STX.Blue+'+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+filepath+'"')
+		Leav(STX.Blue+STX.havlin+'\n+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+filepath+'"\n'+STX.Blue+STX.havlin)
 	if len(sys.argv) >2:	
 		if len(sys.argv[2].strip) >1:
 			output=sys.argv[2].strip()
@@ -168,7 +169,7 @@ print"""
                         /_______  /____/|___  /\_____  /
                                 \/          \/       \/ 
 
-Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
+                    +Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
 					This is BETA , Tools still under Development
 """
 if __name__ == '__main__':
@@ -180,6 +181,6 @@ if __name__ == '__main__':
     	strm.write(result)
     	strm.close()
     	printnote("\n"+STX.lin+"\nSaved to "+output,0)
-    Leav('Done')
+    Leav('\n Done')
 
 
