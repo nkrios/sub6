@@ -1,7 +1,12 @@
 # !/bin/python
+
 import sys
 import os
 import httplib
+
+class DTCT:
+	modulus='NO APPLICATION WAS FOUND FOR'
+	heroku='no such app'
 
 
 class STX:
@@ -19,13 +24,18 @@ class STX:
     Green='\033[1;32m'
     White='\033[1;37m'
     lin="_________________________________________________________________________________________________"
-    heroku='no such app'
     me='Sub6.py'
 
 
 def defit():
 	global count
 	count=0
+
+	global result
+	result=''
+
+	global output
+	output='result.txt'
 
 	global domains
 	domains=''
@@ -37,11 +47,26 @@ def Leav(s):
 	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'
 	exit();
 
-def printnote(s):
-	print (STX.brown+s+STX.Green)
+def printx (s,con):
+	print(s)
+	global result
+	if con==1:
+		result = result+str(s)
 
-def printerror(s):
+
+
+def printnote(s,con):
+	print (STX.brown+s+STX.Green)
+	global result
+	if con==1:
+		result = result+str(s)
+
+def printerror(s,con):
 	print STX.RED+s+STX.Green
+	global result
+	if con==1:
+		result = result+str(s)
+
 
 def Investigate(ur,indx):
 	
@@ -50,31 +75,36 @@ def Investigate(ur,indx):
 	else:
 		url=ur
 	ur=ur.strip()
-	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+ur.strip()+"]   ")
+	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+ur.strip()+"]   ",0)
 	try:
 		conn = httplib.HTTPConnection(ur) 
 		conn.request("GET","/index.html")
 		conn.sock.settimeout(5.0)
 		res = conn.getresponse()
 		source=res.read()
-		print str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(source))+"]"
+
+		printx( str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(source))+"]",1)
 		redirectlink=res.getheader('location')
 		server=res.getheader('server')
 		if "None" not in str(redirectlink) :
-			print STX.WARNING+"Redirects to > "+redirectlink+STX.Green
+			printx( STX.WARNING+"Redirects to > "+redirectlink+STX.Green,1 )
 		if "None" not in str(server):
-			print STX.Blue+"Server = "+str(server)+STX.Green
-		if STX.heroku in res.lower():
-			print STX.UNDERlinE+"Heroku detected"+STX.Green
+			printx( STX.Blue+"Server = "+str(server)+STX.Green,1)
+
+		if DTCT.heroku in source.lower():
+			printx (STX.UNDERlinE+"Heroku detected"+STX.Green,1)
+		if DTCT.modulus in source.lower():
+			printx (STX.UNDERlinE+"modulus.io detected"+STX.Green,1)
 
 	except Exception, e:
 		if "nor servname provided, or not known" in str(e):
-			printerror( "Unreachable")
+			printerror( "Unreachable",1)
 		else: 		
-			printerror (str(e))
+			printerror (str(e),1)
 
 
 def execNow():
+	global output
 	
 
 
@@ -91,12 +121,19 @@ def execNow():
 
 	if len(sys.argv) < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"  [file] \n            "+STX.Green+STX.me+"  list.txt\n")
+		Leav("\n +Usage     "+STX.me+"    [file]       [file]\n            "+STX.Green+STX.me+"   list.txt  output.txt\n")
 	
 
 	filepath = sys.argv[1]
 	if os.path.isfile(filepath) is False:
 		Leav('Error File not found \nPath:"'+STX.Green+filepath+'"')
+	if len(sys.argv) >2:	
+		if len(sys.argv[2].strip) >1:
+			output=sys.argv[2].strip()
+	else:
+		print("Output file : "+output)
+
+
 
 	with open(filepath) as x :
 		domains=x.readlines()
@@ -121,9 +158,8 @@ else:
 print"""
                           _________    ___.     ________
                          /   _____/__ _\_ |__  /  _____/
-                         \_____  \|  |  \ __ \/   __  \ 
-                         /        \  |  / \_\ \  |__\  \
-                        
+           ]<==========  \_____  \|  |  \ __ \/   __  \   ========>[..
+           ]<==========  /        \  |  / \_\ \  |__\  \  ========>[..                       
                         /_______  /____/|___  /\_____  /
                                 \/          \/       \/ 
 
@@ -133,6 +169,12 @@ Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
 if __name__ == '__main__':
     defit()
     execNow()
+
+    if result != '':
+    	strm=open(output,'w')
+    	strm.write(result)
+    	strm.close()
+    	printnote("\n"+STX.lin+"\nSaved to "+output,0)
     Leav('Done')
 
 
