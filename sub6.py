@@ -126,11 +126,16 @@ def execNow():
 
 	filepath = sys.argv[1]
 	if os.path.isfile(filepath) is False:
-		Leav('Error File not found \nPath:"'+STX.Green+filepath+'"')
+		Leav(STX.Blue+'+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+filepath+'"')
 	if len(sys.argv) >2:	
 		if len(sys.argv[2].strip) >1:
 			output=sys.argv[2].strip()
 	else:
+		tmp = sys.argv[1].strip()
+		lst = tmp.strip().split('/')
+		output=lst[len(lst)-1].strip()
+		output="Sup6_Resuilt__"+output
+
 		print("Output file : "+output)
 
 
