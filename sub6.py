@@ -111,15 +111,15 @@ def execNow():
 
 	if len(sys.argv) < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"    -f [from_file]      -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -f list.txt 	   -o output.txt         -s phpinfo.php\n")
+		Leav("\n +Usage     "+STX.me+"    -i [input_file]      -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -f list.txt 	   -o output.txt         -s phpinfo.php\n")
 	
 	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:')
 	for o,a in opts:
-		if o=='-i' or o=='-input' or o=='-f':
+		if o=='-i' :
 			input_file=a
-		elif  o=='-o' or o=='-output' or o=='-to':
+		elif  o=='-o' :
 			output_file=a
-		elif o=='-sufx' or o=='-s':
+		elif o=='-s':
 			sufx=a;
 
 
