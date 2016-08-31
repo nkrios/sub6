@@ -5,6 +5,7 @@ import os,datetime
 import httplib
 
 
+y=raw_input()
 class DTCT:
 	modulus='NO APPLICATION WAS FOUND FOR'
 	heroku='no such app'
@@ -67,19 +68,20 @@ def printerror(s,con):
 		result = result+str(s)
 
 
-def Investigate(ur,indx):
+def Investigate(host,indx):
 	global sufx
-	if ur.startswith("http") is False:
-		url="htttps://"+ur
+	host=host.strip()
+	if host.startswith("http") is False:
+		url="https://"+host
 	else:
-		url=ur
-	ur=ur.strip()
+		url=host
 	sfx= ""
 	if(len(sufx.strip()) > 0):
-		sfx="/"+sufx
-	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+ur.strip()+sfx+"]   ",0)
+		if sufx.startswith('/') is False:		
+			sfx="/"+sufx
+	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+url.strip()+sfx+"]   ",0)
 	try:
-		conn = httplib.HTTPConnection(ur) 
+		conn = httplib.HTTPConnection(host) 
 		conn.request("GET",sufx)
 		conn.sock.settimeout(5.0)
 		res = conn.getresponse()
