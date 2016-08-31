@@ -153,14 +153,14 @@ else:
 	os.system('clear')
 
 
+print STX.RED
+print"                          _________    ___.     ________"+STX.RED
+print"                         /   _____/__ _\_ |__  /  _____/"+STX.Green
+print"           ]<=========="+STX.RED+"  \_____  \|  |  \ __ \/   __  \   "+STX.Green+"========>[.."
+print"           ]<=========="+STX.RED+"  /        \  |  / \_\ \  |__\  \  "+STX.Green+"========>[.."+STX.RED
+print"                        /_______  /____/|___  /\_____  /"
+print"                                \/          \/       \/ "+STX.Green
 print"""
-                          _________    ___.     ________
-                         /   _____/__ _\_ |__  /  _____/
-           ]<==========  \_____  \|  |  \ __ \/   __  \   ========>[..
-           ]<==========  /        \  |  / \_\ \  |__\  \  ========>[..                       
-                        /_______  /____/|___  /\_____  /
-                                \/          \/       \/ 
-
                     +Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
 					This is BETA , Tools still under Development
 """
