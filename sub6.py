@@ -1,8 +1,9 @@
 # !/bin/python
 
-import sys
-import os
+import sys,getopt
+import os,datetime
 import httplib
+
 
 class DTCT:
 	modulus='NO APPLICATION WAS FOUND FOR'
@@ -26,20 +27,19 @@ class STX:
     lin="_________________________________________________________________________________________________"
     havlin='----------------------------'
     me='Sub6.py'
+    sufx=''
 
 
 def defit():
-	global count
+	global count,result,domains,output_file,input_file,opts,args,sufx
 	count=0
-
-	global result
 	result=''
-
-	global output
-	output='result.txt'
-
-	global domains
 	domains=''
+	output_file='result.txt'
+	input_file=''
+	opts={}
+	args={}
+	sufx=''
 
 
 
@@ -53,8 +53,6 @@ def printx (s,con):
 	global result
 	if con==1:
 		result = result+str(s)
-
-
 
 def printnote(s,con):
 	print (STX.brown+s+STX.Green)
@@ -70,16 +68,19 @@ def printerror(s,con):
 
 
 def Investigate(ur,indx):
-	
+	global sufx
 	if ur.startswith("http") is False:
 		url="htttps://"+ur
 	else:
 		url=ur
 	ur=ur.strip()
-	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+ur.strip()+"]   ",0)
+	sfx= ""
+	if(len(sufx.strip()) > 0):
+		sfx="/"+sufx
+	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+ur.strip()+sfx+"]   ",0)
 	try:
 		conn = httplib.HTTPConnection(ur) 
-		conn.request("GET","/index.html")
+		conn.request("GET",sufx)
 		conn.sock.settimeout(5.0)
 		res = conn.getresponse()
 		source=res.read()
@@ -105,43 +106,34 @@ def Investigate(ur,indx):
 
 
 def execNow():
-	global output
-	
-
-
-	# print 	STX.RED
-	# print 	"|-------------------------------------------------------------|"
-	# print 	"|-------------------------------------------------------------|"+STX.White
-	# print 	"|------------    ++++++++++++++++++++++++++    ---------------|"
-	# print 	"|------------    "+STX.Blue+"+"+STX.me+"+      ---------------|"
-	# print 	"|------------    ++++++++++++++++++++++++++    ---------------|"+STX.RED
-	# print 	"|-------------------------------------------------------------|"
-	# print 	"|-------------------------------------------------------------|\n"+STX.Green
-	# print   STX.lin
+	global output_file,input_file,sufx
 
 
 	if len(sys.argv) < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"    [file]       [file]\n            "+STX.Green+STX.me+"   list.txt  output.txt\n")
+		Leav("\n +Usage     "+STX.me+"    -f [from_file]      -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -f list.txt 	   -o output.txt         -s phpinfo.php\n")
 	
-
-	filepath = sys.argv[1]
-	if os.path.isfile(filepath) is False:
-		Leav(STX.Blue+STX.havlin+'\n+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+filepath+'"\n'+STX.Blue+STX.havlin)
-	if len(sys.argv) >2:	
-		if len(sys.argv[2].strip) >1:
-			output=sys.argv[2].strip()
-	else:
-		tmp = sys.argv[1].strip()
-		lst = tmp.strip().split('/')
-		output=lst[len(lst)-1].strip()
-		output="Sup6_Resuilt__"+output
-
-		print("Output file : "+output)
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:')
+	for o,a in opts:
+		if o=='-i' or o=='-input' or o=='-f':
+			input_file=a
+		elif  o=='-o' or o=='-output' or o=='-to':
+			output_file=a
+		elif o=='-sufx' or o=='-s':
+			sufx=a;
 
 
+	
+	if os.path.isfile(input_file) is False:
+		Leav(STX.Blue+STX.havlin+'\n+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+input_file+'"\n'+STX.Blue+STX.havlin)
 
-	with open(filepath) as x :
+	
+	printx(STX.lin,0)
+	printnote("started at "+str(datetime.datetime.now()),0)
+	printx("input file  :"+input_file,0)
+	printx("output file :"+output_file,0)
+	printx("suffix      :"+sufx,0)
+	with open(input_file) as x :
 		domains=x.readlines()
 	for dom in domains:
 		global count
@@ -177,10 +169,10 @@ if __name__ == '__main__':
     execNow()
 
     if result != '':
-    	strm=open(output,'w')
+    	strm=open(output_file,'w')
     	strm.write(result)
     	strm.close()
-    	printnote("\n"+STX.lin+"\nSaved to "+output,0)
+    	printnote("\n"+STX.lin+"\nSaved to "+output_file,0)
     Leav('\n Done')
 
 
