@@ -102,6 +102,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	requestErrorMSG=''
 	resultobject=url
 	procOverHTTP=False
+	redirectlink=''
 	while requestDone is False:
 		try:
 			if STX.UseProx is False:
@@ -126,7 +127,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 					resultobject=resultobject+'\n'+requestErrorMSG+'\n'
 			elif "doesn't match either of" in requestErrorMSG:
 				resultobject=resultobject+'\n SSL Error'
-				requestErrorMSG='SSL Error, Retrying Over HTTP..'
+				requestErrorMSG='SSL Error'+(', Retrying Over HTTP..' if ForceHTTP==False else "")
 				procOverHTTP=True
 			printerror ('\n'+requestErrorMSG,1)
 
@@ -138,7 +139,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 		authheader=getheader(res,'WWW-Authenticate')
 
 		
-		if "None" not in str(server):
+		if "None" not in str(server) and len(server) >1:
 			printx( STX.Blue+"			Server = ["+str(server+"]")+STX.Green,1)
 			resultobject=resultobject+'Server:'+server+'\n'
 		if authheader != "" and 'None' not in str(authheader):	
@@ -157,8 +158,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 				resultobject=resultobject+'Hosted at '+si+'\n'
 	if AddToResult:
 		result=result+resultobject+'\n'
-	if procOverHTTP:
+	if procOverHTTP and ForceHTTP==False:
 		Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
+	elif proto=='http' and redirectlink.startswith('https:'):
+		Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True)
+
 
 def getabsolutepath(p):
 	workingdir=os.getcwd()+'/'
