@@ -85,22 +85,23 @@ def spaces(s,i):
 		for i in range(0,i-lens):
 			s=s+' '
 	return s
-def Investigate(hostp,indx,AddToResult,trycounter):
+def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	global sufx,result
 	host=hostp.strip()
 	if host.startswith("http") is False:
-		url=STX.protocol+"://"+host
+		url=proto.lower()+"://"+host
 	else:
 		url=host
 	sfx= ""
 	if(len(sufx.strip()) > 0):
 		if sufx.startswith('/') is False:		
 			sfx="/"+sufx
-	printnote ("\n"+STX.lin+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
+	printnote ("\n"+(STX.lin if ForceHTTP==False else STX.havlin)+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
 	requestDone=False
 	requestSuccess=False
 	requestErrorMSG=''
 	resultobject=url
+	procOverHTTP=False
 	while requestDone is False:
 		try:
 			if STX.UseProx is False:
@@ -112,14 +113,18 @@ def Investigate(hostp,indx,AddToResult,trycounter):
 			requestSuccess=False
 			requestDone=True
 			requestErrorMSG=str(e)
-			if 'Max retries exceeded with url' in requestErrorMSG:
+			if "nor servname provided, or not known" in requestErrorMSG:
+				printerror( "Unreachable",1)
+				requestErrorMSG='Unreachable'
+			elif 'Max retries exceeded with url' in requestErrorMSG:
 				requestErrorMSG='Connection Timed out'
 				if hostp not in STX.TimedOutList and AddToResult==True:
 					STX.TimedOutList.append(hostp)
-					resultobject=resultobject+requestErrorMSG+'\n'
-			if "nor servname provided, or not known" in str(e):
-				printerror( "Unreachable",1)
-			
+					resultobject=resultobject+'\n'+requestErrorMSG+'\n'
+			elif "doesn't match either of" in requestErrorMSG:
+				resultobject=resultobject+'\n SSL Error'
+				requestErrorMSG='SSL Error, Retrying Over HTTP..'
+				procOverHTTP=True
 			printerror ('\n'+requestErrorMSG,1)
 
 	if requestSuccess:
@@ -149,7 +154,8 @@ def Investigate(hostp,indx,AddToResult,trycounter):
 				resultobject=resultobject+'Hosted at '+si+'\n'
 	if AddToResult:
 		result=result+resultobject+'\n'
-
+	if procOverHTTP:
+		Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
 
 def getabsolutepath(p):
 	workingdir=os.getcwd()+'/'
@@ -276,7 +282,7 @@ def execNow():
 		elif len(dom) < 5:
 			continue
 		else :			
-			Investigate(dom,count,True,trycounter)
+			Investigate(dom,count,True,trycounter,STX.protocol,False)
 
 	trycounter=2
 	print ('\n----------------Retrying Timedout Domains .... ')
@@ -288,7 +294,7 @@ def execNow():
 			elif len(dom) < 5:
 				continue
 			else :			
-				Investigate(dom,count,False,trycounter)
+				Investigate(dom,count,False,trycounter,STX.protocol,False)
 	
 
 
@@ -316,7 +322,7 @@ if __name__ == '__main__':
     	execNow()
     except KeyboardInterrupt,n:
     	printerror('\nAborted By user',0)
-    if startIndex>0:
+    if STX.startIndex>0:
     	olddata=''
     	with open(output_file) as rd:
     		olddata=rd.read()
