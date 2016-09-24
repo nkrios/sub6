@@ -5,11 +5,11 @@ import os,datetime
 import httplib
 
 
-y=raw_input()
 class DTCT:
 	modulus='NO APPLICATION WAS FOUND FOR'
 	heroku='no such app'
-
+	githubio="<p><strong>There isn't a GitHub Pages site here.</strong></p>".lower()
+	providerslist={'Modulus.io':modulus,'Heroku':heroku,'Github.io':githubio}
 
 class STX:
     HEADER = '\033[95m'
@@ -32,7 +32,7 @@ class STX:
 
 
 def defit():
-	global count,result,domains,output_file,input_file,opts,args,sufx
+	global count,result,domains,output_file,input_file,opts,args,sufx,authurl
 	count=0
 	result=''
 	domains=''
@@ -40,6 +40,7 @@ def defit():
 	input_file=''
 	opts={}
 	args={}
+	authurl=[]
 	sufx=''
 
 
@@ -54,6 +55,7 @@ def printx (s,con):
 	global result
 	if con==1:
 		result = result+str(s)
+
 
 def printnote(s,con):
 	print (STX.brown+s+STX.Green)
@@ -83,22 +85,31 @@ def Investigate(host,indx):
 	try:
 		conn = httplib.HTTPConnection(host) 
 		conn.request("GET",sufx)
-		conn.sock.settimeout(5.0)
+		conn.sock.settimeout(1.0)
 		res = conn.getresponse()
-		source=res.read()
+		source=res.read().lower()
 
 		printx( str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(source))+"]",1)
 		redirectlink=res.getheader('location')
 		server=res.getheader('server')
-		if "None" not in str(redirectlink) :
-			printx( STX.WARNING+"Redirects to > "+redirectlink+STX.Green,1 )
+		authheader=res.getheader('WWW-Authenticate')
+
+		
+		if "None" not in str(redirectlink) and '' not in str(redirectlink):
+			printx( STX.WARNING+"Redirects to >> [ "+redirectlink+STX.Green+" ]",1 )
+		
 		if "None" not in str(server):
 			printx( STX.Blue+"Server = "+str(server)+STX.Green,1)
+		
+		if authheader != "" and 'None' not in str(authheader):	
+			print('Authentication on '+host+'WWW-Authenticate:'+authheader)
 
-		if DTCT.heroku in source.lower():
-			printx (STX.UNDERlinE+"Heroku detected"+STX.Green,1)
-		if DTCT.modulus in source.lower():
-			printx (STX.UNDERlinE+"modulus.io detected"+STX.Green,1)
+
+		foundunclaimed=False
+		for si in DTCT.providerslist:
+			if DTCT.providerslist[si] in source:
+				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
+				foundunclaimed=True
 
 	except Exception, e:
 		if "nor servname provided, or not known" in str(e):
@@ -106,14 +117,20 @@ def Investigate(host,indx):
 		else: 		
 			printerror (str(e),1)
 
+def getabsolutepath(p):
+	workingdir=os.getcwd()+'/'
+	workingdir=workingdir.replace('//','/')
+	p=p.replace(workingdir,'')
+	p=workingdir+p
+	return p
 
 def execNow():
 	global output_file,input_file,sufx
 
-
-	if len(sys.argv) < 2:
+	arglen=len(sys.argv)
+	if arglen < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"    -i [input_file]      -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -f list.txt 	   -o output.txt         -s phpinfo.php\n")
+		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php\n")
 	
 	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:')
 	for o,a in opts:
@@ -124,17 +141,35 @@ def execNow():
 		elif o=='-s':
 			sufx=a;
 
-
+	if arglen > 1 and input_file=="":
+		input_file=sys.argv[1]
 	
+	##Repairing relative paths
+	input_file=getabsolutepath(input_file)
+	output_file=getabsolutepath(output_file)
+
 	if os.path.isfile(input_file) is False:
 		Leav(STX.Blue+STX.havlin+'\n+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+input_file+'"\n'+STX.Blue+STX.havlin)
 
+	try:
+		with open('providers.txt') as strm:
+			lines=strm.readlines()
+			for l in lines:
+				if ':' in l:
+					arr=l.split(':')
+					site=arr[0]
+					delimeter=arr[1]
+					if delimeter !="":
+						DTCT.providerslist[site]=delimeter
+	except Exception,e:
+		printnote('No list found , i will use the built in',0)
 	
-	printx(STX.lin,0)
-	printnote("started at "+str(datetime.datetime.now()),0)
-	printx("input file  :"+input_file,0)
-	printx("output file :"+output_file,0)
-	printx("suffix      :"+sufx,0)
+	printnote(STX.lin+"started at "+str(datetime.datetime.now()),0)
+	printx("input file  : [ "+input_file+" ]",0)
+	printx("output file : [ "+output_file+"  ]",0)
+	printx('Domains loaded: '+str(len(DTCT.providerslist)),0)
+	if sufx != "":
+		printx("suffix      :"+sufx,0)
 	with open(input_file) as x :
 		domains=x.readlines()
 	for dom in domains:
