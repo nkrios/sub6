@@ -10,7 +10,7 @@ class DTCT:
 	heroku='no such app'
 	githubio="<p><strong>There isn't a GitHub Pages site here.</strong></p>".lower()
 	providerslist={'Modulus.io':modulus,'Heroku':heroku,'Github.io':githubio}
-
+ 
 class STX:
     HEADER = '\033[95m'
     OKBlue = '\033[94m'

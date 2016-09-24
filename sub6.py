@@ -33,6 +33,7 @@ class STX:
     sufx=''
     timeout=(5,15)
     TimedOutList=[]
+    protocol='http'
 
 
 def defit():
@@ -83,7 +84,7 @@ def Investigate(hostp,indx):
 	global sufx,result
 	host=hostp.strip()
 	if host.startswith("http") is False:
-		url="http://"+host
+		url=STX.protocol+"://"+host
 	else:
 		url=host
 	sfx= ""
@@ -156,12 +157,16 @@ def execNow():
 		print STX.lin
 		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php\n")
 	
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:')
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:')
 	for o,a in opts:
 		if o=='-i' :
 			input_file=a
 		elif  o=='-o' :
 			output_file=a
+		elif  o=='-p' :
+			a=a.lower()[1:]
+			if a=='http' or a=='https':
+				STX.protocol=a
 		elif o=='-s':
 			sufx=a;
 		elif o=='-t':
@@ -191,13 +196,9 @@ def execNow():
 					if delimeter !="" and site not in DTCT.providerslist and l.startswith('#')==False:
 						DTCT.providerslist[site]=delimeter
 	except Exception,e:
-		printnote('No list found , i will use the built in',0)
+		xio='debugging'
+		#printnote('No list found , i will use the built in',0)
 	
-	printnote(STX.lin+"\nStarted at        : "+str(datetime.datetime.now()),0)
-	printx("\nInput file        : [ "+input_file+" ]",0)
-	printx("\nOutput file       : [ "+output_file+"  ]",0)
-	printx('\nDomains loaded    : '+str(len(DTCT.providerslist)),0)
-	printx('\nConnection TimeOut: '+str(STX.timeout),0)
 	if sufx != "":
 		printx("suffix      :"+sufx,0)
 	if ',' in input_file :
@@ -211,15 +212,26 @@ def execNow():
 	for inp in inputfileList:
 		with open(inp) as x :
 			domains=x.readlines()
-		for dom in domains:
-			count=count+1
-			if "." not in dom:
-				continue 
-			elif len(dom) < 5:
-				continue
-			else :			
-				Investigate(dom,count)
 
+	printnote(STX.lin+"\nStarted at         : "+str(datetime.datetime.now()),0)
+	printx("\nInput file         : [ "+input_file+" ]",0)
+	printx("\nOutput file        : [ "+output_file+"  ]",0)
+	printx('\nSubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
+	printx('\nConnection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
+	printx('\nDomains Loaded     : '+str(len(domains)),0)
+	printx('\nProtocol           : '+STX.protocol.upper(),0)
+
+	
+	for dom in domains:
+		count=count+1
+		if "." not in dom:
+			continue 
+		elif len(dom) < 5:
+			continue
+		else :			
+			Investigate(dom,count)
+
+	print ('\n----------------Retrying Timedout Domains .... ')
 	if len(STX.TimedOutList) > 0:
 		count =count+1
 		for dom in STX.TimedOutList:
