@@ -1,5 +1,6 @@
 # !/bin/python
-
+# Cross-Domain Crawler and subdomain take over detector
+# Author: YasserGersy gersy.ch2@gmail.com
 import sys,getopt
 import os,datetime
 try:
@@ -36,14 +37,14 @@ class STX:
     lin="_________________________________________________________________________________________________"
     havlin='----------------------------'
     me='Sub6.py'
-    ver='v1.0'
+    ver='v1.1'
     sufx=''
     timeout=(5,15)
     TimedOutList=[]
     protocol='http'
     startIndex=0
     proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
-
+    headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:47.0) Gecko/20100101 Firefox/47.0','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-US,en;q=0.5'}
 def defit():
 	global count,result,domains,output_file,input_file,opts,args,sufx,authurl
 	count=0
@@ -106,9 +107,10 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	while requestDone is False:
 		try:
 			if STX.UseProx is False:
-				res=requests.get(url,timeout=STX.timeout,allow_redirects=STX.allow_redirects)
+				res=requests.get(url,timeout=STX.timeout,headers=STX.headers,allow_redirects=STX.allow_redirects)
 			else:
-				res=requests.get(url,timeout=STX.timeout,allow_redirects=STX.allow_redirects,proxies=STX.proxyDict)
+				res=requests.get(url,timeout=STX.timeout,headers=STX.headers,allow_redirects=STX.allow_redirects,proxies=STX.proxyDict)
+
 			requestDone=requestSuccess=True
 		except Exception, e:
 			requestSuccess=False
@@ -141,23 +143,23 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 		
 		if "None" not in str(server) and len(server) >1:
 			printx( STX.Blue+"			Server = ["+str(server+"]")+STX.Green,1)
-			resultobject=resultobject+'Server:'+server+'\n'
+			resultobject=resultobject+'\nServer:'+server+'\n'
 		if authheader != "" and 'None' not in str(authheader):	
 			print('Authentication on '+host+'WWW-Authenticate:'+authheader)
-			resultobject=resultobject+'Authentication:'+authheader+'\n'
+			resultobject=resultobject+'\nAuthentication:'+authheader
 
 		if "None" not in str(redirectlink) and '' != str(redirectlink):
 			printx( STX.yel+"\n Redirects To 	             	 "+redirectlink+" "+STX.Green,1 )
-			resultobject=resultobject+'Redirect:'+redirectlink+'\n'
+			resultobject=resultobject+'\nRedirect:'+redirectlink
 
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
 				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
 				foundunclaimed=True
-				resultobject=resultobject+'Hosted at '+si+'\n'
+				resultobject=resultobject+'\nHosted at '+si+'\n'
 	if AddToResult:
-		result=result+resultobject+'\n'
+		result=result+resultobject+'\n\n'
 	if ForceHTTP==False:
 		if procOverHTTP :
 			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
@@ -199,15 +201,17 @@ def execNow():
 				STX.protocol=a
 		elif o=='-s':
 			sufx=a;
+			if sufx.startswith('='):
+				sufx=sufx[1:]
 		elif o=='-t':
 			time=''.join(c for c in a if c.isdigit())
 			time=int(time)
-			STX.timeout=(time,time*3)
+			STX.timeout=(time,time*4)
 		elif o=='-x':
 			val=''.join(c for c in a if c.isdigit())
 			val=int(val)
 			STX.startIndex=val
-		elif o=='X':
+		elif o=='-X':
 			STX.UseProx=True
 		elif o=='-R':
 			v=False
@@ -242,8 +246,6 @@ def execNow():
 		#printnote('No list found , i will use the built in',0)
 	
 	domains=[]
-	if sufx != "":
-		printx("suffix      :"+sufx,0)
 	if ',' in input_file :
 		arr=input_file.split(',')
 		for f in arr:
@@ -269,9 +271,9 @@ def execNow():
 	printx('\n   SubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
 	printx('\n   Protocol           : '+STX.protocol.upper(),0)
 	printx('\n   Connection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
-	if STX.startIndex>0:
-		printx('\n   Starting Index     : '+str(STX.startIndex),0)
-	
+	printx('' if len(sufx)  < 2 else ('\n   Suffix             : /'+sufx),0)
+	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
+	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
 	
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
