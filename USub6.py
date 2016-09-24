@@ -2,9 +2,8 @@
 
 import sys,getopt
 import os,datetime
-import requests
+import httplib
 
-requests.packages.urllib3.disable_warnings()
 
 class DTCT:
 	modulus='NO APPLICATION WAS FOUND FOR'
@@ -25,14 +24,11 @@ class STX:
     brown='\033[0;33m'
     Blue='\033[0;34m'
     Green='\033[1;32m'
-    magenta='\033[1;35m'
     White='\033[1;37m'
     lin="_________________________________________________________________________________________________"
     havlin='----------------------------'
     me='Sub6.py'
     sufx=''
-    timeout=(5,15)
-    TimedOutList=[]
 
 
 def defit():
@@ -55,33 +51,28 @@ def Leav(s):
 	exit();
 
 def printx (s,con):
-	sys.stdout.write(s)
-	sys.stdout.flush()
+	print(s)
+	global result
+	if con==1:
+		result = result+str(s)
 
 
 def printnote(s,con):
-	sys.stdout.write(STX.brown+s)
-	sys.stdout.flush()
+	print (STX.brown+s+STX.Green)
+	global result
+	if con==1:
+		result = result+str(s)
+
 def printerror(s,con):
-	sys.stdout.write(STX.FAIL+s)
-	sys.stdout.flush()
-def getheader(rqust,headername):
-	res=''
-	try:
-		res=rqust.headers[headername]
-	except Exception ,n :
-		res=''
-	return res
-def spaces(s,i):
-	s=str(s)
-	lens=len(s)
-	if lens < i:
-		for i in range(0,i-lens):
-			s=s+' '
-	return s
-def Investigate(hostp,indx):
+	print STX.RED+s+STX.Green
+	global result
+	if con==1:
+		result = result+str(s)
+
+
+def Investigate(host,indx):
 	global sufx
-	host=hostp.strip()
+	host=host.strip()
 	if host.startswith("http") is False:
 		url="https://"+host
 	else:
@@ -90,55 +81,41 @@ def Investigate(hostp,indx):
 	if(len(sufx.strip()) > 0):
 		if sufx.startswith('/') is False:		
 			sfx="/"+sufx
-	printnote ("\n"+STX.lin+"\n [+] "+spaces("Checking ["+str(indx)+"]",22)+"     ["+url.strip()+sfx+"]   ",0)
-	requestDone=False
-	requestSuccess=False
-	requestErrorMSG=''
-	resultobject=url
-	while requestDone is False:
-		try:
-			res=requests.get(url,timeout=STX.timeout)
-			requestDone=requestSuccess=True
-		except Exception, e:
-			requestSuccess=False
-			requestDone=True
-			requestErrorMSG=str(e)
-			if 'Max retries exceeded with url' in requestErrorMSG:
-				requestErrorMSG='Connection Timed out'
-				if hostp not in STX.TimedOutList:
-					STX.TimedOutList.append(hostp)
-					resultobject=resultobject+requestErrorMSG+'\n'
-			if "nor servname provided, or not known" in str(e):
-				printerror( "Unreachable",1)
-			
-			printerror ('\n'+requestErrorMSG,1)
+	printnote ("\n"+STX.lin+"\n [+] Checking ["+str(indx)+"]     ["+url.strip()+sfx+"]   ",0)
+	try:
+		conn = httplib.HTTPConnection(host) 
+		conn.request("GET",sufx)
+		conn.sock.settimeout(1.0)
+		res = conn.getresponse()
+		source=res.read().lower()
 
-	if requestSuccess:
-		source=res.text.lower()
-		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,20)+STX.Green+"       Content-Length=["+str(len(source))+"]",1)
-		redirectlink=getheader(res,'location')
-		server=getheader(res,'server')
-		authheader=getheader(res,'WWW-Authenticate')
+		printx( str(res.status)+ " "+str(res.reason)+"       \nContent-Length=["+str(len(source))+"]",1)
+		redirectlink=res.getheader('location')
+		server=res.getheader('server')
+		authheader=res.getheader('WWW-Authenticate')
 
+		
 		if "None" not in str(redirectlink) and '' not in str(redirectlink):
-			printx( STX.WARNING+"\n Redirects to >> [ "+redirectlink+STX.Green+" ]",1 )
-			resultobject=resultobject+'Redirect:'+redirectlink+'\n'
+			printx( STX.WARNING+"Redirects to >> [ "+redirectlink+STX.Green+" ]",1 )
 		
 		if "None" not in str(server):
-			printx( STX.Blue+"		Server = "+str(server)+STX.Green,1)
-			resultobject=resultobject+'Server:'+server+'\n'
+			printx( STX.Blue+"Server = "+str(server)+STX.Green,1)
+		
 		if authheader != "" and 'None' not in str(authheader):	
 			print('Authentication on '+host+'WWW-Authenticate:'+authheader)
-			resultobject=resultobject+'Authentication:'+authheader+'\n'
+
 
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
 				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
 				foundunclaimed=True
-				resultobject=resultobject+'Hosted at '+si+'\n'
 
-	
+	except Exception, e:
+		if "nor servname provided, or not known" in str(e):
+			printerror( "Unreachable",1)
+		else: 		
+			printerror (str(e),1)
 
 def getabsolutepath(p):
 	workingdir=os.getcwd()+'/'
@@ -155,7 +132,7 @@ def execNow():
 		print STX.lin
 		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php\n")
 	
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:')
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:')
 	for o,a in opts:
 		if o=='-i' :
 			input_file=a
@@ -163,10 +140,6 @@ def execNow():
 			output_file=a
 		elif o=='-s':
 			sufx=a;
-		elif o=='-t':
-			time=''.join(c for c in a if c.isdigit())
-			time=int(time)
-			STX.timeout=(time,time*3)
 
 	if arglen > 1 and input_file=="":
 		input_file=sys.argv[1]
@@ -186,22 +159,21 @@ def execNow():
 					arr=l.split(':')
 					site=arr[0]
 					delimeter=arr[1]
-					if delimeter !="" and site not in DTCT.providerslist and l.startswith('#')==False:
+					if delimeter !="":
 						DTCT.providerslist[site]=delimeter
 	except Exception,e:
 		printnote('No list found , i will use the built in',0)
 	
-	printnote(STX.lin+"\nStarted at        : "+str(datetime.datetime.now()),0)
-	printx("\nInput file        : [ "+input_file+" ]",0)
-	printx("\nOutput file       : [ "+output_file+"  ]",0)
-	printx('\nDomains loaded    : '+str(len(DTCT.providerslist)),0)
-	printx('\nConnection TimeOut: '+str(STX.timeout),0)
-	global count
+	printnote(STX.lin+"started at "+str(datetime.datetime.now()),0)
+	printx("input file  : [ "+input_file+" ]",0)
+	printx("output file : [ "+output_file+"  ]",0)
+	printx('Domains loaded: '+str(len(DTCT.providerslist)),0)
 	if sufx != "":
 		printx("suffix      :"+sufx,0)
 	with open(input_file) as x :
 		domains=x.readlines()
 	for dom in domains:
+		global count
 		count=count+1
 		if "." not in dom:
 			continue 
@@ -209,15 +181,6 @@ def execNow():
 			continue
 		else :			
 			Investigate(dom,count)
-	if len(STX.TimedOutList) > 0:
-		count =count+1
-		for dom in STX.TimedOutList:
-			if "." not in dom:
-				continue 
-			elif len(dom) < 5:
-				continue
-			else :			
-				Investigate(dom,count)
 	
 
 
