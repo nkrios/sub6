@@ -114,8 +114,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 			requestDone=True
 			requestErrorMSG=str(e)
 			if "nor servname provided, or not known" in requestErrorMSG:
-				printerror( "Unreachable",1)
 				requestErrorMSG='Unreachable'
+			elif 'Read timed out' in requestErrorMSG:
+				requestErrorMSG='Read timed out'
+				STX.TimedOutList.append(hostp)
+				resultobject=resultobject+'\n'+requestErrorMSG+'\n'
 			elif 'Max retries exceeded with url' in requestErrorMSG:
 				requestErrorMSG='Connection Timed out'
 				if hostp not in STX.TimedOutList and AddToResult==True:
@@ -333,5 +336,3 @@ if __name__ == '__main__':
     	strm.close()
     	printnote("\n"+STX.lin+"\nSaved to "+output_file,0)
     Leav('\n Done')
-
-
