@@ -85,7 +85,7 @@ def spaces(s,i):
 		for i in range(0,i-lens):
 			s=s+' '
 	return s
-def Investigate(hostp,indx):
+def Investigate(hostp,indx,AddToResult,trycounter):
 	global sufx,result
 	host=hostp.strip()
 	if host.startswith("http") is False:
@@ -96,7 +96,7 @@ def Investigate(hostp,indx):
 	if(len(sufx.strip()) > 0):
 		if sufx.startswith('/') is False:		
 			sfx="/"+sufx
-	printnote ("\n"+STX.lin+STX.Green+"\n [+] "+spaces("Checking ["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
+	printnote ("\n"+STX.lin+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
 	requestDone=False
 	requestSuccess=False
 	requestErrorMSG=''
@@ -114,7 +114,7 @@ def Investigate(hostp,indx):
 			requestErrorMSG=str(e)
 			if 'Max retries exceeded with url' in requestErrorMSG:
 				requestErrorMSG='Connection Timed out'
-				if hostp not in STX.TimedOutList:
+				if hostp not in STX.TimedOutList and AddToResult==True:
 					STX.TimedOutList.append(hostp)
 					resultobject=resultobject+requestErrorMSG+'\n'
 			if "nor servname provided, or not known" in str(e):
@@ -147,7 +147,8 @@ def Investigate(hostp,indx):
 				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
 				foundunclaimed=True
 				resultobject=resultobject+'Hosted at '+si+'\n'
-	result=resultobject+'\n'
+	if AddToResult:
+		result=result+resultobject+'\n'
 
 
 def getabsolutepath(p):
@@ -258,12 +259,14 @@ def execNow():
 		printx('\n   Starting Index     : '+str(STX.startIndex),0)
 	
 	
-
-	printnote("\n"+STX.yel+"Started at         : "+str(datetime.datetime.now()),0)
+	tm=str(datetime.datetime.now())
+	printnote("\n"+STX.yel+"Started at         : "+tm,0)
+	result=STX.lin+'Started at '+tm+'\n'
 	
 	
 	if STX.startIndex >= len(domains):
 		STX.startIndex=0
+	trycounter=1
 	for dom in domains:
 		count=count+1
 		if count<STX.startIndex:
@@ -273,8 +276,9 @@ def execNow():
 		elif len(dom) < 5:
 			continue
 		else :			
-			Investigate(dom,count)
+			Investigate(dom,count,True,trycounter)
 
+	trycounter=2
 	print ('\n----------------Retrying Timedout Domains .... ')
 	if len(STX.TimedOutList) > 0:
 		count =count+1
@@ -284,7 +288,7 @@ def execNow():
 			elif len(dom) < 5:
 				continue
 			else :			
-				Investigate(dom,count)
+				Investigate(dom,count,False,trycounter)
 	
 
 
@@ -312,6 +316,11 @@ if __name__ == '__main__':
     	execNow()
     except KeyboardInterrupt,n:
     	printerror('\nAborted By user',0)
+    if startIndex>0:
+    	olddata=''
+    	with open(output_file) as rd:
+    		olddata=rd.read()
+    	result=olddata+'\n\n'+result
     if result != '':
     	strm=open(output_file,'w')
     	strm.write(result)
