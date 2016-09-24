@@ -158,10 +158,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 				resultobject=resultobject+'Hosted at '+si+'\n'
 	if AddToResult:
 		result=result+resultobject+'\n'
-	if procOverHTTP and ForceHTTP==False:
-		Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
-	elif proto=='http' and redirectlink.startswith('https:'):
-		Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True)
+	if ForceHTTP==False:
+		if procOverHTTP :
+			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
+		elif proto=='http' and redirectlink.startswith('https:') :
+			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True)
 
 
 def getabsolutepath(p):
