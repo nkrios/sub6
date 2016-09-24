@@ -80,10 +80,10 @@ def spaces(s,i):
 			s=s+' '
 	return s
 def Investigate(hostp,indx):
-	global sufx
+	global sufx,result
 	host=hostp.strip()
 	if host.startswith("http") is False:
-		url="https://"+host
+		url="http://"+host
 	else:
 		url=host
 	sfx= ""
@@ -137,6 +137,7 @@ def Investigate(hostp,indx):
 				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
 				foundunclaimed=True
 				resultobject=resultobject+'Hosted at '+si+'\n'
+	result=resultobject+'\n'
 
 	
 
@@ -148,8 +149,8 @@ def getabsolutepath(p):
 	return p
 
 def execNow():
-	global output_file,input_file,sufx
-
+	global output_file,input_file,sufx,count
+	inputfileList=[]
 	arglen=len(sys.argv)
 	if arglen < 2:
 		print STX.lin
@@ -172,10 +173,11 @@ def execNow():
 		input_file=sys.argv[1]
 	
 	##Repairing relative paths
-	input_file=getabsolutepath(input_file)
+	if ',' not in input_file:
+		input_file=getabsolutepath(input_file)
 	output_file=getabsolutepath(output_file)
 
-	if os.path.isfile(input_file) is False:
+	if os.path.isfile(input_file) is False and ',' not in input_file:
 		Leav(STX.Blue+STX.havlin+'\n+[Yasta]! Error '+STX.RED+'\n    Input File not found \n    Path:"'+STX.Green+input_file+'"\n'+STX.Blue+STX.havlin)
 
 	try:
@@ -196,19 +198,28 @@ def execNow():
 	printx("\nOutput file       : [ "+output_file+"  ]",0)
 	printx('\nDomains loaded    : '+str(len(DTCT.providerslist)),0)
 	printx('\nConnection TimeOut: '+str(STX.timeout),0)
-	global count
 	if sufx != "":
 		printx("suffix      :"+sufx,0)
-	with open(input_file) as x :
-		domains=x.readlines()
-	for dom in domains:
-		count=count+1
-		if "." not in dom:
-			continue 
-		elif len(dom) < 5:
-			continue
-		else :			
-			Investigate(dom,count)
+	if ',' in input_file :
+		arr=input_file.split(',')
+		for f in arr:
+			if f not in fileList:
+				inputfileList.append(f)
+	else:
+		inputfileList.append(input_file)
+
+	for inp in inputfileList:
+		with open(inp) as x :
+			domains=x.readlines()
+		for dom in domains:
+			count=count+1
+			if "." not in dom:
+				continue 
+			elif len(dom) < 5:
+				continue
+			else :			
+				Investigate(dom,count)
+
 	if len(STX.TimedOutList) > 0:
 		count =count+1
 		for dom in STX.TimedOutList:
