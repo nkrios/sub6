@@ -2,8 +2,11 @@
 
 import sys,getopt
 import os,datetime
-import requests
-
+try:
+	import requests
+except ImportError :
+	print('\n Requests not installed ...\n Exiting...')
+	exit()
 requests.packages.urllib3.disable_warnings()
 
 class DTCT:
@@ -26,15 +29,20 @@ class STX:
     Blue='\033[0;34m'
     Green='\033[1;32m'
     magenta='\033[1;35m'
+    yel = '\033[93m'
     White='\033[1;37m'
+    UseProx=False
+    allow_redirects=False
     lin="_________________________________________________________________________________________________"
     havlin='----------------------------'
     me='Sub6.py'
+    ver='v1.0'
     sufx=''
     timeout=(5,15)
     TimedOutList=[]
     protocol='http'
-
+    startIndex=0
+    proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
 
 def defit():
 	global count,result,domains,output_file,input_file,opts,args,sufx,authurl
@@ -47,9 +55,6 @@ def defit():
 	args={}
 	authurl=[]
 	sufx=''
-
-
-
 
 def Leav(s):
 	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'
@@ -91,14 +96,17 @@ def Investigate(hostp,indx):
 	if(len(sufx.strip()) > 0):
 		if sufx.startswith('/') is False:		
 			sfx="/"+sufx
-	printnote ("\n"+STX.lin+"\n [+] "+spaces("Checking ["+str(indx)+"]",22)+"     ["+url.strip()+sfx+"]   ",0)
+	printnote ("\n"+STX.lin+STX.Green+"\n [+] "+spaces("Checking ["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
 	requestDone=False
 	requestSuccess=False
 	requestErrorMSG=''
 	resultobject=url
 	while requestDone is False:
 		try:
-			res=requests.get(url,timeout=STX.timeout)
+			if STX.UseProx is False:
+				res=requests.get(url,timeout=STX.timeout,allow_redirects=STX.allow_redirects)
+			else:
+				res=requests.get(url,timeout=STX.timeout,allow_redirects=STX.allow_redirects,proxies=STX.proxyDict)
 			requestDone=requestSuccess=True
 		except Exception, e:
 			requestSuccess=False
@@ -116,21 +124,22 @@ def Investigate(hostp,indx):
 
 	if requestSuccess:
 		source=res.text.lower()
-		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,20)+STX.Green+"       Content-Length=["+str(len(source))+"]",1)
+		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,20)+STX.White+"        Content-Length=["+str(len(source))+"]",1)
 		redirectlink=getheader(res,'location')
 		server=getheader(res,'server')
 		authheader=getheader(res,'WWW-Authenticate')
 
-		if "None" not in str(redirectlink) and '' not in str(redirectlink):
-			printx( STX.WARNING+"\n Redirects to >> [ "+redirectlink+STX.Green+" ]",1 )
-			resultobject=resultobject+'Redirect:'+redirectlink+'\n'
 		
 		if "None" not in str(server):
-			printx( STX.Blue+"		Server = "+str(server)+STX.Green,1)
+			printx( STX.Blue+"			Server = ["+str(server+"]")+STX.Green,1)
 			resultobject=resultobject+'Server:'+server+'\n'
 		if authheader != "" and 'None' not in str(authheader):	
 			print('Authentication on '+host+'WWW-Authenticate:'+authheader)
 			resultobject=resultobject+'Authentication:'+authheader+'\n'
+
+		if "None" not in str(redirectlink) and '' != str(redirectlink):
+			printx( STX.yel+"\n Redirects To 	             	 "+redirectlink+" "+STX.Green,1 )
+			resultobject=resultobject+'Redirect:'+redirectlink+'\n'
 
 		foundunclaimed=False
 		for si in DTCT.providerslist:
@@ -140,7 +149,6 @@ def Investigate(hostp,indx):
 				resultobject=resultobject+'Hosted at '+si+'\n'
 	result=resultobject+'\n'
 
-	
 
 def getabsolutepath(p):
 	workingdir=os.getcwd()+'/'
@@ -148,6 +156,13 @@ def getabsolutepath(p):
 	p=p.replace(workingdir,'')
 	p=workingdir+p
 	return p
+def arraytostr(x):
+	if len(x)==1:
+		return str(x)
+	res=''
+	for l in x:
+		res=res+l+', '
+	return res[0,len(res)-2]
 
 def execNow():
 	global output_file,input_file,sufx,count
@@ -155,9 +170,9 @@ def execNow():
 	arglen=len(sys.argv)
 	if arglen < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]      -s [suffix]<optional>\n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php\n")
+		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]<optional>      -s [suffix]<optional>	-x [start index] <optional> \n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php		-x 4\n")
 	
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:')
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R')
 	for o,a in opts:
 		if o=='-i' :
 			input_file=a
@@ -173,6 +188,18 @@ def execNow():
 			time=''.join(c for c in a if c.isdigit())
 			time=int(time)
 			STX.timeout=(time,time*3)
+		elif o=='-x':
+			val=''.join(c for c in a if c.isdigit())
+			val=int(val)
+			STX.startIndex=val
+		elif o=='X':
+			STX.UseProx=True
+		elif o=='-R':
+			v=False
+			if a=='1' or a==1 or a=='True' or a=='true':
+				v=True
+			STX.allow_redirects=v
+
 
 	if arglen > 1 and input_file=="":
 		input_file=sys.argv[1]
@@ -199,31 +226,48 @@ def execNow():
 		xio='debugging'
 		#printnote('No list found , i will use the built in',0)
 	
+	domains=[]
 	if sufx != "":
 		printx("suffix      :"+sufx,0)
 	if ',' in input_file :
 		arr=input_file.split(',')
 		for f in arr:
-			if f not in fileList:
+			if f not in inputfileList:
 				inputfileList.append(f)
 	else:
 		inputfileList.append(input_file)
 
 	for inp in inputfileList:
 		with open(inp) as x :
-			domains=x.readlines()
+			ds=x.readlines()
+			for dline in ds :
+				dline=dline.strip()
+				if dline=='' or '.' not in dline:
+					continue
+				if dline not in domains:
+					domains.append(dline)
 
-	printnote(STX.lin+"\nStarted at         : "+str(datetime.datetime.now()),0)
-	printx("\nInput file         : [ "+input_file+" ]",0)
-	printx("\nOutput file        : [ "+output_file+"  ]",0)
-	printx('\nSubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
-	printx('\nConnection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
-	printx('\nDomains Loaded     : '+str(len(domains)),0)
-	printx('\nProtocol           : '+STX.protocol.upper(),0)
-
+	printnote(STX.lin+"\n[+] Info"+STX.White,0)
+	printx("\n   Input file"+("s" if len(inputfileList)>1 else ' ')+"        : [ "+input_file+" ]",0)
+	printx("\n   Output file        : [ "+output_file+"  ]",0)
+	printx('\n   Domains Loaded     : '+str(len(domains)),0)
+	printx('\n   SubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
+	printx('\n   Protocol           : '+STX.protocol.upper(),0)
+	printx('\n   Connection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
+	if STX.startIndex>0:
+		printx('\n   Starting Index     : '+str(STX.startIndex),0)
 	
+	
+
+	printnote("\n"+STX.yel+"Started at         : "+str(datetime.datetime.now()),0)
+	
+	
+	if STX.startIndex >= len(domains):
+		STX.startIndex=0
 	for dom in domains:
 		count=count+1
+		if count<STX.startIndex:
+			continue
 		if "." not in dom:
 			continue 
 		elif len(dom) < 5:
@@ -259,12 +303,15 @@ print"                        /_______  /____/|___  /\_____  /"
 print"                                \/          \/       \/ "+STX.Green
 print"""
                     +Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
-					This is BETA , Tools still under Development
+					This is BETA , Tool  stills under Development
 """
+
 if __name__ == '__main__':
     defit()
-    execNow()
-
+    try:
+    	execNow()
+    except KeyboardInterrupt,n:
+    	printerror('\nAborted By user',0)
     if result != '':
     	strm=open(output_file,'w')
     	strm.write(result)
