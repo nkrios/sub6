@@ -42,6 +42,7 @@ class STX:
     timeout=(5,15)
     TimedOutList=[]
     protocol='http'
+    HosInjection=False
     startIndex=0
     proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
     headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:47.0) Gecko/20100101 Firefox/47.0','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-US,en;q=0.5'}
@@ -88,6 +89,11 @@ def spaces(s,i):
 	return s
 def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	global sufx,result
+	if STX.HosInjection:
+		STX.headers['Host']=hostp+'.evil.com'
+	else:
+		STX.headers['Host']=hostp
+
 	host=hostp.strip()
 	if host.startswith("http") is False:
 		url=proto.lower()+"://"+host
@@ -187,38 +193,61 @@ def execNow():
 	arglen=len(sys.argv)
 	if arglen < 2:
 		print STX.lin
-		Leav("\n +Usage     "+STX.me+"    -i [input_file]     -o [output_file]<optional>      -s [suffix]<optional>	-x [start index] <optional> \n            "+STX.Green+STX.me+"    -i list.txt 	   -o output.txt         -s phpinfo.php		-x 4\n")
-	
+		msg=("""   +Usage     python sub6.py    -i [input_file]     -o [output_file]<optional>      -s [suffix]<optional>	-x [start index] <optional>
+		                      python sub6.py    -i list.txt 	   -o output.txt         -s phpinfo.php		-x 4
+
+		                      +Options
+		                      -i      input  files (if many separate by comma)
+		                      -o      output file
+		                      -p      protocol (http/https)
+		                      -s      suffix    (/phpinfo.php)         #used to look for ceratin files
+		                      -t
+		                      -x      starting index                   #if script stopped , you can resume it with this.
+		                      -X      To use proxy
+		                      -R      Follow redirects
+		                      -H      For Host injection mode
+
+		            """)
+		Leav(msg)
 	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R')
 	for o,a in opts:
-		if o=='-i' :
+		if o=='-i' :		#i > input
 			input_file=a
-		elif  o=='-o' :
+		elif  o=='-o' :		#o > output
 			output_file=a
-		elif  o=='-p' :
+		elif  o=='-p' :		#p > protocol
 			a=a.lower()[1:]
 			if a=='http' or a=='https':
 				STX.protocol=a
-		elif o=='-s':
+		elif o=='-s':		#s > sufx 
 			sufx=a;
 			if sufx.startswith('='):
 				sufx=sufx[1:]
-		elif o=='-t':
+		elif o=='-t':		#t > timeout 
 			time=''.join(c for c in a if c.isdigit())
 			time=int(time)
 			STX.timeout=(time,time*4)
-		elif o=='-x':
+		elif o=='-x': 		# x > startindex
 			val=''.join(c for c in a if c.isdigit())
 			val=int(val)
 			STX.startIndex=val
-		elif o=='-X':
+		elif o=='-X':       # X > use proxy
 			STX.UseProx=True
-		elif o=='-R':
+			printx('Please provide proxy details')
+			httpprx=raw_input('What proxy you want to use (ex 127.0.0.1:8080) press enter for default or no to disable : ')
+			if httpprx.lower()=='no':
+				STX.UseProx=False
+			elif httpprx == '':
+				httpprx='127.0.0.1:8080'
+			proxyDict = { "http"  : "http://"+httpprx, "https" : "https://"+httpprx,   "ftp"   : "ftp://127.0.0.1:8080"}
+    	elif o=='-R':       #R > allow follow redirects
 			v=False
 			if a=='1' or a==1 or a=='True' or a=='true':
 				v=True
 			STX.allow_redirects=v
-
+		elif o == 'H':
+			if a=='1' or a==1 or a=='True' or a ='true':
+				STX.HosInjection=True
 
 	if arglen > 1 and input_file=="":
 		input_file=sys.argv[1]
@@ -274,7 +303,7 @@ def execNow():
 	printx('' if len(sufx)  < 2 else ('\n   Suffix             : /'+sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	
+	printx('' if STX.HosInjection is False else '\n Host Injection Mode')
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
