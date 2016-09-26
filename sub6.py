@@ -389,8 +389,10 @@ print"           ]<=========="+STX.RED+"  /        \  |  / \_\ \  |__\  \  "+STX
 print"                        /_______  /____/|___  /\_____  /"
 print"                                \/          \/       \/ "+STX.Green
 print"""
-                    +Sub6 Sub-Domain Crawler and take overs detector By @YasserGersy
-					This is BETA , Tool  stills under Development
+		  	+Sub6 Sub-Domain Crawler , CTF Finder and take overs detector 
+			   		   This is BETA Ver, stills under Development
+						  https://github.com/YasserGersy/sub6
+							              By @YasserGersy
 """
 
 if __name__ == '__main__':
