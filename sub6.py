@@ -34,7 +34,7 @@ class STX:
     White='\033[1;37m'
     UseProx=False
     allow_redirects=False
-    lin="_________________________________________________________________________________________________"
+    lin="_______________________________________________________________________________________________________________________"
     havlin='----------------------------'
     me='Sub6.py'
     ver='v1.1'
@@ -89,8 +89,9 @@ def spaces(s,i):
 	return s
 def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	global sufx,result
+	evilhost=hostp+'evil.com'
 	if STX.HosInjection:
-		STX.headers['Host']=hostp+'.evil.com'
+		STX.headers['Host']=evilhost
 	else:
 		STX.headers['Host']=hostp
 
@@ -100,10 +101,15 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	else:
 		url=host
 	sfx= ""
-	if(len(sufx.strip()) > 0):
-		if sufx.startswith('/') is False:		
+	if(len(sufx.strip()) > 0) :
+		if sufx.startswith('/')is False :		
 			sfx="/"+sufx
-	printnote ("\n"+(STX.lin if ForceHTTP==False else STX.havlin)+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",22)+"      ["+url.strip()+sfx+"]   ",0)
+		else:
+			sfx=sufx
+
+	url=url+sfx
+
+	printnote ("\n"+(STX.lin if ForceHTTP==False else STX.havlin)+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",27)+"      "+spaces("["+url.strip()+"]",50)+('' if STX.HosInjection==False else (STX.RED+"  :["+STX.headers['Host']+"]")),0)
 	requestDone=False
 	requestSuccess=False
 	requestErrorMSG=''
@@ -141,27 +147,30 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 
 	if requestSuccess:
 		source=res.text.lower()
-		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,20)+STX.White+"        Content-Length=["+str(len(source))+"]",1)
+		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,25)+STX.White+"        "+spaces("Content-Length=["+str(len(source))+"]",52),1)
 		redirectlink=getheader(res,'location')
 		server=getheader(res,'server')
 		authheader=getheader(res,'WWW-Authenticate')
 
 		
 		if "None" not in str(server) and len(server) >1:
-			printx( STX.Blue+"			Server = ["+str(server+"]")+STX.Green,1)
+			printx( STX.Blue+"Server = ["+str(server+"]")+STX.Green,1)
 			resultobject=resultobject+'\nServer:'+server+'\n'
+
 		if authheader != "" and 'None' not in str(authheader):	
 			print('Authentication on '+host+'WWW-Authenticate:'+authheader)
 			resultobject=resultobject+'\nAuthentication:'+authheader
 
 		if "None" not in str(redirectlink) and '' != str(redirectlink):
-			printx( STX.yel+"\n Redirects To 	             	 "+redirectlink+" "+STX.Green,1 )
+			printx( STX.yel+("\n Redirects to                         ")+redirectlink+" "+STX.Green,1 )
 			resultobject=resultobject+'\nRedirect:'+redirectlink
 
+		if evilhost in source:
+			printx(STX.yel+('\n [ Vulnerable to Host injection : 40% ]'),0)
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
-				printx (STX.UNDERlinE+"["+si+"] detected"+STX.Green,1)
+				printx (STX.UNDERlinE+"["+si+"] Subdomain TO is detected"+STX.Green,1)
 				foundunclaimed=True
 				resultobject=resultobject+'\nHosted at '+si+'\n'
 	if AddToResult:
@@ -193,26 +202,31 @@ def execNow():
 	arglen=len(sys.argv)
 	if arglen < 2:
 		print STX.lin
-		msg=("""   +Usage     python sub6.py    -i [input_file]     -o [output_file]<optional>      -s [suffix]<optional>	-x [start index] <optional>
-		                      python sub6.py    -i list.txt 	   -o output.txt         -s phpinfo.php		-x 4
+		msg=("""   +Usage     
+			
+		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4
+	                                             <optional>           <optional>   <optional>
 
-		                      +Options
-		                      -i      input  files (if many separate by comma)
-		                      -o      output file
-		                      -p      protocol (http/https)
-		                      -s      suffix    (/phpinfo.php)         #used to look for ceratin files
-		                      -t
-		                      -x      starting index                   #if script stopped , you can resume it with this.
-		                      -X      To use proxy
-		                      -R      Follow redirects
-		                      -H      For Host injection mode
+		          +Options
+		    -i      input  files (if many separate by comma)
+		    -o      output file
+		    -p      protocol (http/https)
+		    -s      suffix    (/phpinfo.php)         #used to look for ceratin files
+		    -t      Set time out for requests
+		    -x      starting index                   #if script stopped , you can resume it with this.
+		    -X      To use proxy
+		    -R      Follow redirects
+		    -H      For Host injection mode
 
 		            """)
 		Leav(msg)
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R')
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R:H:')
+	output_file=''
 	for o,a in opts:
 		if o=='-i' :		#i > input
 			input_file=a
+			if output_file =='' and ',' not in input_file:
+				output_file =input_file+'__Sub6.result'
 		elif  o=='-o' :		#o > output
 			output_file=a
 		elif  o=='-p' :		#p > protocol
@@ -231,23 +245,20 @@ def execNow():
 			val=''.join(c for c in a if c.isdigit())
 			val=int(val)
 			STX.startIndex=val
+		elif o== '-R':       #R > allow follow redirects
+			STX.allow_redirects=True
+		elif o == '-H':
+			STX.HosInjection=True
 		elif o=='-X':       # X > use proxy
 			STX.UseProx=True
-			printx('Please provide proxy details')
-			httpprx=raw_input('What proxy you want to use (ex 127.0.0.1:8080) press enter for default or no to disable : ')
+			printx('Please provide proxy details',0)
+			httpprx=raw_input('\nWhat proxy you want to use (ex 127.0.0.1:8080) press enter for default or no to disable : ')
 			if httpprx.lower()=='no':
 				STX.UseProx=False
 			elif httpprx == '':
 				httpprx='127.0.0.1:8080'
 			proxyDict = { "http"  : "http://"+httpprx, "https" : "https://"+httpprx,   "ftp"   : "ftp://127.0.0.1:8080"}
-    	elif o=='-R':       #R > allow follow redirects
-			v=False
-			if a=='1' or a==1 or a=='True' or a=='true':
-				v=True
-			STX.allow_redirects=v
-		elif o == 'H':
-			if a=='1' or a==1 or a=='True' or a ='true':
-				STX.HosInjection=True
+    	
 
 	if arglen > 1 and input_file=="":
 		input_file=sys.argv[1]
@@ -294,16 +305,19 @@ def execNow():
 					domains.append(dline)
 
 	printnote(STX.lin+"\n[+] Info"+STX.White,0)
-	printx("\n   Input file"+("s" if len(inputfileList)>1 else ' ')+"        : [ "+input_file+" ]",0)
-	printx("\n   Output file        : [ "+output_file+"  ]",0)
+	spx=len(str(inputfileList))
+	if len(output_file)>spx:
+		spx=len(output_file)
+	printx("\n   Input file"+("s" if len(inputfileList)>1 else ' ')+"        : [ "+spaces(input_file,spx)+" ]",0)
+	printx("\n   Output file        : [ "+spaces(output_file,spx)+" ]",0)
 	printx('\n   Domains Loaded     : '+str(len(domains)),0)
 	printx('\n   SubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
 	printx('\n   Protocol           : '+STX.protocol.upper(),0)
 	printx('\n   Connection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
-	printx('' if len(sufx)  < 2 else ('\n   Suffix             : /'+sufx),0)
+	printx('' if len(sufx)  < 2 else ('\n   Suffix             : '+('' if sufx.startswith('/') else '/')+sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx('' if STX.HosInjection is False else '\n Host Injection Mode')
+	printx('' if STX.HosInjection is False else '\n   Mode:              : Host Injection ',0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
@@ -322,18 +336,19 @@ def execNow():
 			continue
 		else :			
 			Investigate(dom,count,True,trycounter,STX.protocol,False)
-
+ 
 	trycounter=2
-	print ('\n----------------Retrying Timedout Domains .... ')
-	if len(STX.TimedOutList) > 0:
-		count =count+1
-		for dom in STX.TimedOutList:
-			if "." not in dom:
-				continue 
-			elif len(dom) < 5:
-				continue
-			else :			
-				Investigate(dom,count,False,trycounter,STX.protocol,False)
+	if len(STX.TimedOutList)>0:
+		print ('\n'+STX.lin+'\n [+] Retrying Timedout Domains .... ')
+		if len(STX.TimedOutList) > 0:
+			count =count+1
+			for dom in STX.TimedOutList:
+				if "." not in dom:
+					continue 
+				elif len(dom) < 5:
+					continue
+				else :			
+					Investigate(dom,count,False,trycounter,STX.protocol,False)
 	
 
 
@@ -363,12 +378,15 @@ if __name__ == '__main__':
     	printerror('\nAborted By user',0)
     if STX.startIndex>0:
     	olddata=''
-    	with open(output_file) as rd:
-    		olddata=rd.read()
+    	try:
+	    	with open(output_file) as rd:
+    			olddata=rd.read()
+    	except Exception:
+    		olddata=''
     	result=olddata+'\n\n'+result
     if result != '':
     	strm=open(output_file,'w')
     	strm.write(result)
     	strm.close()
-    	printnote("\n"+STX.lin+"\nSaved to "+output_file,0)
+    	printnote("\n"+STX.lin+"\nSaving Result to 		:"+output_file,0)
     Leav('\n Done')
