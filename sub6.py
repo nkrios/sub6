@@ -250,7 +250,7 @@ def execNow():
 			output_file=a
 		elif  o=='-p' :		#p > protocol
 			a=a.lower()[1:]
-			if a=='httpandhttps' or a=='http,https' or a='http&https' or a=='both':
+			if a=='httpandhttps' or a=='http,https' or a=='http&https' or a=='both':
 				STX.protocol='both'
 			if a=='http' or a=='https':
 				STX.protocol=a
