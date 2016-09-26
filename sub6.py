@@ -49,7 +49,7 @@ class STX:
     proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
     headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:47.0) Gecko/20100101 Firefox/47.0','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-US,en;q=0.5'}
 def defit():
-	global count,result,domains,output_file,input_file,opts,args,sufx,authurl
+	global count,result,domains,output_file,input_file,opts,args,authurl
 	count=0
 	result=''
 	domains=''
@@ -58,7 +58,7 @@ def defit():
 	opts={}
 	args={}
 	authurl=[]
-	sufx=''
+	
 
 def Leav(s):
 	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'
@@ -90,7 +90,7 @@ def spaces(s,i):
 			s=s+' '
 	return s
 def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
-	global sufx,result
+	global result
 	evilhost=hostp+'evil.com'
 	if STX.HosInjection:
 		STX.headers['Host']=evilhost
@@ -103,15 +103,15 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 	else:
 		url=host
 	sfx= ""
-	if(len(sufx.strip()) > 0) :
-		if sufx.startswith('/')is False :		
-			sfx="/"+sufx
+	if(len(STX.sufx.strip()) > 0) :
+		if STX.sufx.startswith('/')is False :		
+			sfx="/"+STX.sufx
 		else:
-			sfx=sufx
+			sfx=STX.sufx
 	TryTestingOpenRedirect=STX.OpenRedirector
 
 	if sfx=="" and STX.OpenRedirector:
-		sfx='//'+STX+OpenRedirectorLink
+		sfx='//'+STX.OpenRedirectorLink
 		TryTestingOpenRedirect=False
 
 	url=url+sfx
@@ -154,7 +154,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 
 	if requestSuccess:
 		source=res.text.lower()
-		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,25)+STX.White+"        "+spaces("Content-Length=["+str(len(source))+"]",52),1)
+		printx( '\n '+STX.magenta+str(res.status_code)+ " "+spaces(res.reason,25)+STX.brown+"        "+spaces("Content-Length=["+str(len(source))+"]",52),1)
 		redirectlink=getheader(res,'location')
 		server=getheader(res,'server')
 		authheader=getheader(res,'WWW-Authenticate')
@@ -169,14 +169,14 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 			resultobject=resultobject+'\nAuthentication:'+authheader
 
 		if "None" not in str(redirectlink) and '' != str(redirectlink):
-			printx( STX.yel+("\n Redirects to                         ")+redirectlink+" "+STX.Green,1 )
+			printx( STX.White+("\n Redirects to                         ")+redirectlink+" "+STX.Green,1 )
 			resultobject=resultobject+'\nRedirect:'+redirectlink
 
 		if evilhost in source:
 			printx(STX.yel+('\n [ Vulnerable to Host injection : 40% ]'),0)
 
-		if redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink or STX.OpenRedirectorLink==redirectlink and STX.OpenRedirector:
-			printx(STX.yel+'Open redirector Detected',0)
+		if (redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink==redirectlink or STX.OpenRedirectorLink==redirectlink) and STX.OpenRedirector:
+			printx(STX.yel+'\nOpen redirector Detected',0)
 			resultobject=resultobject+'\n Vulnerable to open redirect'
 
 		foundunclaimed=False
@@ -211,7 +211,7 @@ def arraytostr(x):
 	return res[0,len(res)-2]
 
 def execNow():
-	global output_file,input_file,sufx,count
+	global output_file,input_file,count
 	inputfileList=[]
 	arglen=len(sys.argv)
 	if arglen < 2:
@@ -234,7 +234,11 @@ def execNow():
 
 		            """)
 		Leav(msg)
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R:H:O:')
+	opts,args='',''
+	try:
+		opts,args = getopt.getopt(sys.argv[1:],'i:I:o:s:S:t:T:p:P:x:X:r:R:h:H:O:')
+	except Exception,e:
+		printerror(str(e))
 	output_file=''
 	for o,a in opts:
 		if o=='-i' :		#i > input
@@ -247,10 +251,10 @@ def execNow():
 			a=a.lower()[1:]
 			if a=='http' or a=='https':
 				STX.protocol=a
-		elif o=='-s':		#s > sufx 
-			sufx=a;
-			if sufx.startswith('='):
-				sufx=sufx[1:]
+		elif o=='-s':		#s > sufx  
+			STX.sufx=a;
+			if STX.sufx.startswith('='):
+				STX.sufx=STX.sufx[1:]
 		elif o=='-t':		#t > timeout 
 			time=''.join(c for c in a if c.isdigit())
 			time=int(time)
@@ -330,10 +334,10 @@ def execNow():
 	printx('\n   SubDomain Paterns  : '+str(len(DTCT.providerslist)),0)
 	printx('\n   Protocol           : '+STX.protocol.upper(),0)
 	printx('\n   Connection TimeOut : '+str(STX.timeout).replace(',',':Connection,').replace(')',':ReadingResponse)'),0)
-	printx('' if len(sufx)  < 2 else ('\n   Suffix             : '+('' if sufx.startswith('/') else '/')+sufx),0)
+	printx('' if len(STX.sufx)  < 2 else ('\n   Suffix             : '+('' if STX.sufx.startswith('/') else '/')+STX.sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx('' if STX.HosInjection is False else '\n   Mode:              : Host Injection '+(',Open Redirects' if STX.OpenRedirector else ''),0)
+	printx('' if STX.HosInjection is False else '\n   Mode:              : Subdomain TO , Host Injection '+(',Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
