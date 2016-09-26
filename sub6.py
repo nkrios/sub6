@@ -187,7 +187,8 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 				resultobject=resultobject+'\nHosted at '+si+'\n'
 	if AddToResult:
 		result=result+resultobject+'\n\n'
-	if ForceHTTP==False:
+
+	if ForceHTTP==False or STX.protocol=='both':
 		if procOverHTTP :
 			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
 		elif proto=='http' and redirectlink.startswith('https:') :
@@ -249,6 +250,8 @@ def execNow():
 			output_file=a
 		elif  o=='-p' :		#p > protocol
 			a=a.lower()[1:]
+			if a=='httpandhttps' or a=='http,https' or a='http&https' or a=='both':
+				STX.protocol='both'
 			if a=='http' or a=='https':
 				STX.protocol=a
 		elif o=='-s':		#s > sufx  

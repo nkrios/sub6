@@ -12,7 +12,7 @@ subdomain take over detector and crawler
 		    -i      input  files (if many separate by comma)
 		    -o      output file
 		    -p      protocol (http/https)
-		    -s      suffix    (/phpinfo.php)         #used to look for ceratin files
+		    -s      suffix    (/phpinfo.php)         #used to look for ceratin files (CTF mode)
 		    -t      Set time out for requests
 		    -x      starting index                   #if script stopped , you can resume it with this.
 		    -X      To use proxy
