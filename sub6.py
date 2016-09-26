@@ -43,6 +43,8 @@ class STX:
     TimedOutList=[]
     protocol='http'
     HosInjection=False
+    OpenRedirectorLink='rapid7.com'
+    OpenRedirector=False
     startIndex=0
     proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
     headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:47.0) Gecko/20100101 Firefox/47.0','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-US,en;q=0.5'}
@@ -106,6 +108,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 			sfx="/"+sufx
 		else:
 			sfx=sufx
+	TryTestingOpenRedirect=STX.OpenRedirector
+
+	if sfx=="" and STX.OpenRedirector:
+		sfx='//'+STX+OpenRedirectorLink
+		TryTestingOpenRedirect=False
 
 	url=url+sfx
 
@@ -167,6 +174,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 
 		if evilhost in source:
 			printx(STX.yel+('\n [ Vulnerable to Host injection : 40% ]'),0)
+
+		if redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink or STX.OpenRedirectorLink==redirectlink and STX.OpenRedirector:
+			printx(STX.yel+'Open redirector Detected',0)
+			resultobject=resultobject+'\n Vulnerable to open redirect'
+
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
@@ -180,6 +192,8 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
 		elif proto=='http' and redirectlink.startswith('https:') :
 			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True)
+
+
 
 
 def getabsolutepath(p):
@@ -206,8 +220,7 @@ def execNow():
 			
 		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4
 	                                             <optional>           <optional>   <optional>
-
-		          +Options
+		   """+STX.yel+"""[+]Options
 		    -i      input  files (if many separate by comma)
 		    -o      output file
 		    -p      protocol (http/https)
@@ -216,11 +229,12 @@ def execNow():
 		    -x      starting index                   #if script stopped , you can resume it with this.
 		    -X      To use proxy
 		    -R      Follow redirects
-		    -H      For Host injection mode
+		    -H      For Host injection Testing
+		    -O      For open redirect  Testing
 
 		            """)
 		Leav(msg)
-	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R:H:')
+	opts,args = getopt.getopt(sys.argv[1:],'i:o:s:t:p:x:X:R:H:O:')
 	output_file=''
 	for o,a in opts:
 		if o=='-i' :		#i > input
@@ -249,6 +263,8 @@ def execNow():
 			STX.allow_redirects=True
 		elif o == '-H':
 			STX.HosInjection=True
+		elif o =='-O':
+			STX.OpenRedirector=True
 		elif o=='-X':       # X > use proxy
 			STX.UseProx=True
 			printx('Please provide proxy details',0)
@@ -317,7 +333,7 @@ def execNow():
 	printx('' if len(sufx)  < 2 else ('\n   Suffix             : '+('' if sufx.startswith('/') else '/')+sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx('' if STX.HosInjection is False else '\n   Mode:              : Host Injection ',0)
+	printx('' if STX.HosInjection is False else '\n   Mode:              : Host Injection '+(',Open Redirects' if STX.OpenRedirector else ''),0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
