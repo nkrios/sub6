@@ -43,7 +43,7 @@ class STX:
     TimedOutList=[]
     protocol='http'
     HosInjection=False
-    OpenRedirectorLink='rapid7.com'
+    OpenRedirectorLink='www.rapid7.com'
     OpenRedirector=False
     startIndex=0
     proxyDict = { "http"  : "http://127.0.0.1:8080", "https" : "https://127.0.0.1:8080",   "ftp"   : "ftp://127.0.0.1:8080"}
@@ -89,10 +89,11 @@ def spaces(s,i):
 		for i in range(0,i-lens):
 			s=s+' '
 	return s
-def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
+def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 	global result
 	evilhost=hostp+'evil.com'
-	if STX.HosInjection:
+
+	if STX.HosInjection and injecthost:
 		STX.headers['Host']=evilhost
 	else:
 		STX.headers['Host']=hostp
@@ -116,13 +117,15 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 
 	url=url+sfx
 
-	printnote ("\n"+(STX.lin if ForceHTTP==False else STX.havlin)+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",27)+"      "+spaces("["+url.strip()+"]",50)+('' if STX.HosInjection==False else (STX.RED+"  :["+STX.headers['Host']+"]")),0)
+	printnote ("\n"+(STX.lin if ForceHTTP==False else STX.havlin)+STX.Green+"\n [+] "+spaces("Checking ["+str(trycounter)+"]["+str(indx)+"]",27)+"      "+spaces("["+url.strip()+"]",50)+('' if STX.HosInjection==False or injecthost==False else (STX.RED+"  :["+STX.headers['Host']+"]")),0)
 	requestDone=False
 	requestSuccess=False
 	requestErrorMSG=''
-	resultobject=url
+	resultobject='GET '+url
 	procOverHTTP=False
 	redirectlink=''
+	if STX.headers['Host']!=hostp:
+		resultobject=resultobject+'\nHost'+STX.headers['Host']
 	while requestDone is False:
 		try:
 			if STX.UseProx is False:
@@ -131,6 +134,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 				res=requests.get(url,timeout=STX.timeout,headers=STX.headers,allow_redirects=STX.allow_redirects,proxies=STX.proxyDict)
 
 			requestDone=requestSuccess=True
+			resultobject=resultobject+'\n\n'+str(res.status_code)+" "+res.reason
 		except Exception, e:
 			requestSuccess=False
 			requestDone=True
@@ -151,6 +155,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 				requestErrorMSG='SSL Error'+(', Retrying Over HTTP..' if ForceHTTP==False else "")
 				procOverHTTP=True
 			printerror ('\n'+requestErrorMSG,1)
+			resultobject=resultobject+'\nError'+requestErrorMSG
 
 	if requestSuccess:
 		source=res.text.lower()
@@ -174,25 +179,33 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP):
 
 		if evilhost in source:
 			printx(STX.yel+('\n [ Vulnerable to Host injection : 40% ]'),0)
+			resultobject=resultobject+'\n'+STX.havlin+'Vulnerable to Host injection'+STX.havlin
 
 		if (redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink==redirectlink or STX.OpenRedirectorLink==redirectlink) and STX.OpenRedirector:
 			printx(STX.yel+'\nOpen redirector Detected',0)
 			resultobject=resultobject+'\n Vulnerable to open redirect'
+			resultobject=resultobject+'\n'+STX.havlin+'Vulnerable to Open Redirection'+STX.havlin
 
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
-				printx (STX.UNDERlinE+"["+si+"] Subdomain TO is detected"+STX.Green,1)
+				printx (STX.Green+('      'if len(server)>2 else '')+"["+si+"] "+("Subdomain TO is detected" if STX.headers['Host']==hostp else '')+STX.Green,1)
+				#raw_input(source)
 				foundunclaimed=True
-				resultobject=resultobject+'\nHosted at '+si+'\n'
+				resultobject=resultobject+STX.havlin+'Hosted at '+si+STX.havlin+'\n'
 	if AddToResult:
 		result=result+resultobject+'\n\n'
 
 	if ForceHTTP==False or STX.protocol=='both':
 		if procOverHTTP :
-			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True)
+			Investigate(hostp,(str(indx)+'] [HTTP'),AddToResult,trycounter,'http',True,False)
 		elif proto=='http' and redirectlink.startswith('https:') :
-			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True)
+			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True,False)
+		
+		if injecthost==False and STX.HosInjection:
+			Investigate(hostp,(str(indx)+'] [H-Inj'),AddToResult,trycounter,'https',True,True)
+
+
 
 
 
@@ -340,7 +353,7 @@ def execNow():
 	printx('' if len(STX.sufx)  < 2 else ('\n   Suffix             : '+('' if STX.sufx.startswith('/') else '/')+STX.sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx('' if STX.HosInjection is False else '\n   Mode:              : Subdomain TO , Host Injection '+(',Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
+	printx( '\n   Mode:              : Subdomain TO '+(' ' if STX.HosInjection ==False else', Host Injection ')+(', Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
@@ -358,11 +371,11 @@ def execNow():
 		elif len(dom) < 5:
 			continue
 		else :			
-			Investigate(dom,count,True,trycounter,STX.protocol,False)
+			Investigate(dom,count,True,trycounter,STX.protocol,False,False)
  
 	trycounter=2
 	if len(STX.TimedOutList)>0:
-		print ('\n'+STX.lin+'\n [+] Retrying Timedout Domains .... ')
+		print ('\n'+STX.lin+STX.yel+'\n [+] Retrying Timedout Domains .... ')
 		if len(STX.TimedOutList) > 0:
 			count =count+1
 			for dom in STX.TimedOutList:
@@ -371,7 +384,7 @@ def execNow():
 				elif len(dom) < 5:
 					continue
 				else :			
-					Investigate(dom,count,False,trycounter,STX.protocol,False)
+					Investigate(dom,count,False,trycounter,STX.protocol,False,STX.False)
 	
 
 
@@ -410,6 +423,8 @@ if __name__ == '__main__':
     		olddata=''
     	result=olddata+'\n\n'+result
     if result != '':
+    	if output_file[len(output_file)-1]=='/':
+    		output_file=output_file+'_result.txt'
     	strm=open(output_file,'w')
     	strm.write(result)
     	strm.close()
