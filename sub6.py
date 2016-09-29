@@ -189,7 +189,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 		foundunclaimed=False
 		for si in DTCT.providerslist:
 			if DTCT.providerslist[si] in source:
-				printx (STX.Green+('      'if len(server)>2 else '')+"["+si+"] "+("Subdomain TO is detected" if STX.headers['Host']==hostp else '')+STX.Green,1)
+				printx (STX.Green+('      'if len(server)>2 else '')+"["+si+"] "+(" Subdomain TO is detected" if STX.headers['Host']==hostp else '')+STX.Green,1)
 				#raw_input(source)
 				foundunclaimed=True
 				resultobject=resultobject+STX.havlin+'Hosted at '+si+STX.havlin+'\n'
@@ -353,7 +353,7 @@ def execNow():
 	printx('' if len(STX.sufx)  < 2 else ('\n   Suffix             : '+('' if STX.sufx.startswith('/') else '/')+STX.sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx( '\n   Mode:              : Subdomain TO '+(' ' if STX.HosInjection ==False else', Host Injection ')+(', Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
+	printx( '\n   Modes:              : Statue Checking,Subdomain TO '+(' ' if STX.HosInjection ==False else', Host Injection ')+(', Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
@@ -384,7 +384,7 @@ def execNow():
 				elif len(dom) < 5:
 					continue
 				else :			
-					Investigate(dom,count,False,trycounter,STX.protocol,False,STX.False)
+					Investigate(dom,count,False,trycounter,STX.protocol,False,STX)
 	
 
 
