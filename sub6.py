@@ -164,10 +164,15 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 				if hostp not in STX.TimedOutList and AddToResult==True:
 					STX.TimedOutList.append(hostp)
 					resultobject=resultobject+'\n'+requestErrorMSG+'\n'
+			elif "esn't match eith" in requestErrorMSG:
+				resultobject=resultobject+'\n Error missmatch host'
+				requestErrorMSG=result+'\n SSl Error conflict'
+				requestErrorMSG='SSL Error'+(', Retrying Over HTTP..' if ForceHTTP==False else "")
+				procOverHTTP=True
 			elif 'ssl' in requestErrorMSG and 'erro' in requestErrorMSG:
 				if "doesn't match either of" in requestErrorMSG:
 					resultobject=resultobject+'\n SSL Error'
-				elif 'alert handshake failure' on requestErrorMSG:
+				elif 'alert handshake failure' in requestErrorMSG:
 					requestErrorMSG=result+'\n Handshake Erro'
 				requestErrorMSG='SSL Error'+(', Retrying Over HTTP..' if ForceHTTP==False else "")
 				procOverHTTP=True
@@ -222,8 +227,12 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True,False)
 		
 		if injecthost==False and STX.HosInjection :
-			Investigate(hostp,(str(indx)+'] [H-Inj'),AddToResult,trycounter,'https',True,True)
-
+			Investigate(hostp,(str(indx)+'] [Hos-Inj'),AddToResult,trycounter,'https',True,True)
+		if STX.RSplit:
+			v=STX.sufx
+			STX.sufx='/%0d%0a/'
+			Investigate(hostp,(str(indx)+'] [R-SPl'),AddToResult,trycounter,'https',True,False)
+			STX.sufx=v
 
 
 
@@ -264,6 +273,7 @@ def execNow():
 		    -R      Follow redirects
 		    -H      For Host injection Testing
 		    -O      For open redirect  Testing
+		    -S      Response Split
 
 		            """)
 		Leav(msg)
@@ -302,8 +312,12 @@ def execNow():
 			STX.allow_redirects=True
 		elif o == '-H' or o=='H':
 			STX.HosInjection=True
-		elif o =='-O':
-			STX.OpenRedirector=True
+		elif o=='-S' or o=='S':
+			STX.RSplit=True
+#		elif o =='-O':
+ #   		STX.OpenRedirector=True
+ 		elif o=='-O':
+ 			STX.OpenRedirector=True
 		elif o=='-X':       # X > use proxy
 			STX.UseProx=True
 			printx('Please provide proxy details',0)
@@ -314,7 +328,6 @@ def execNow():
 				httpprx='127.0.0.1:8080'
 			proxyDict = { "http"  : "http://"+httpprx, "https" : "https://"+httpprx,   "ftp"   : "ftp://127.0.0.1:8080"}
     	
-
 	if arglen > 1 and input_file=="":
 		input_file=sys.argv[1]
 	
@@ -372,7 +385,7 @@ def execNow():
 	printx('' if len(STX.sufx)  < 2 else ('\n   Suffix             : '+('' if STX.sufx.startswith('/') else '/')+STX.sufx),0)
 	printx('' if STX.startIndex<1 else ('\n   Starting Index     : '+str(STX.startIndex)),0)
 	printx('' if STX.UseProx is False else '\n   Using Proxy        : '+str(STX.proxyDict),0)
-	printx( '\n   Modes:              : Statue Checking,Subdomain TO '+(' ' if STX.HosInjection ==False else', Host Injection ')+(', Open Redirects' if STX.OpenRedirector else '')+(', CTF' if len(STX.sufx) > 2 else ''),0)
+	printx( '\n   Modes:              : ['+STX.Green+'Statue Checking,'+STX.magenta+'Subdomain TO '+(STX.Green+',RSplit' if STX.RSplit else '')+(' ' if STX.HosInjection ==False else STX.magenta+', Host Injection ')+(STX.Green+', Open Redirects' if STX.OpenRedirector else '')+(STX.magenta+', CTF' if len(STX.sufx) > 2 else '')+STX.White+']',0)
 	tm=str(datetime.datetime.now())
 	printnote("\n"+STX.yel+"Started at         : "+tm,0)
 	result=STX.lin+'Started at '+tm+'\n'
