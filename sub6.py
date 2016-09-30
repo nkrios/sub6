@@ -59,7 +59,20 @@ def defit():
 	args={}
 	authurl=[]
 	
+def IsCommonThirdParty(body):
+	thirds={'Zendesk':'<div class="powered-by-zendesk">'}
 
+	for c in thirds:
+		if thirds[c] in body:
+			return c
+	return ''
+def IsCommonErrorPage(body):
+	commons=["<li>Message: The specified bucket does not exist</li>"]
+
+	for c in commons:
+		if c  in body:
+			return True
+	return False
 def Leav(s):
 	print "\n"+STX.RED+s+"\n"+STX.White+STX.lin+STX.Green+'\n'
 	exit();
@@ -128,6 +141,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 		resultobject=resultobject+'\nHost'+STX.headers['Host']
 	while requestDone is False:
 		try:
+			
 			if STX.UseProx is False:
 				res=requests.get(url,timeout=STX.timeout,headers=STX.headers,allow_redirects=STX.allow_redirects)
 			else:
@@ -150,11 +164,16 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 				if hostp not in STX.TimedOutList and AddToResult==True:
 					STX.TimedOutList.append(hostp)
 					resultobject=resultobject+'\n'+requestErrorMSG+'\n'
-			elif "doesn't match either of" in requestErrorMSG:
-				resultobject=resultobject+'\n SSL Error'
+			elif 'ssl' in requestErrorMSG and 'erro' in requestErrorMSG:
+				if "doesn't match either of" in requestErrorMSG:
+					resultobject=resultobject+'\n SSL Error'
+				elif 'alert handshake failure' on requestErrorMSG:
+					requestErrorMSG=result+'\n Handshake Erro'
 				requestErrorMSG='SSL Error'+(', Retrying Over HTTP..' if ForceHTTP==False else "")
 				procOverHTTP=True
-			printerror ('\n'+requestErrorMSG,1)
+
+			else:
+				printerror ('\n'+requestErrorMSG,1)
 			resultobject=resultobject+'\nError'+requestErrorMSG
 
 	if requestSuccess:
@@ -177,8 +196,8 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 			printx( STX.White+("\n Redirects to                         ")+redirectlink+" "+STX.Green,1 )
 			resultobject=resultobject+'\nRedirect:'+redirectlink
 
-		if evilhost in source:
-			printx(STX.yel+('\n [ Vulnerable to Host injection : 40% ]'),0)
+		if evilhost in source and IsCommonErrorPage(body)==False:
+			printx(STX.yel+('\n [ Vulnerable to Host injection : 60% ]'),0)
 			resultobject=resultobject+'\n'+STX.havlin+'Vulnerable to Host injection'+STX.havlin
 
 		if (redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink==redirectlink or STX.OpenRedirectorLink==redirectlink) and STX.OpenRedirector:
@@ -202,7 +221,7 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 		elif proto=='http' and redirectlink.startswith('https:') :
 			Investigate(hostp,(str(indx)+'] [HTTPS'),AddToResult,trycounter,'https',True,False)
 		
-		if injecthost==False and STX.HosInjection:
+		if injecthost==False and STX.HosInjection :
 			Investigate(hostp,(str(indx)+'] [H-Inj'),AddToResult,trycounter,'https',True,True)
 
 
@@ -252,7 +271,7 @@ def execNow():
 	try:
 		opts,args = getopt.getopt(sys.argv[1:],'i:I:o:s:S:t:T:p:P:x:X:r:R:h:H:O:')
 	except Exception,e:
-		printerror(str(e))
+		printerror(str(e),0)
 	output_file=''
 	for o,a in opts:
 		if o=='-i' :		#i > input
@@ -281,7 +300,7 @@ def execNow():
 			STX.startIndex=val
 		elif o== '-R':       #R > allow follow redirects
 			STX.allow_redirects=True
-		elif o == '-H':
+		elif o == '-H' or o=='H':
 			STX.HosInjection=True
 		elif o =='-O':
 			STX.OpenRedirector=True
