@@ -2,8 +2,9 @@
 subdomain take over detector and crawler 
 
 
-<img src='http://i.imgur.com/CLgFPKp.png' onerror='alert("deleted");' /> 
-
+/*<img src='http://i.imgur.com/CLgFPKp.png' onerror='alert("deleted");' /> 
+*/
+![Usage](ScreenShotUsg.png]
   +Usage     
 			
 		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4

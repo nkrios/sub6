@@ -13,8 +13,9 @@ requests.packages.urllib3.disable_warnings()
 class DTCT:
 	modulus='NO APPLICATION WAS FOUND FOR'
 	heroku='no such app'
+	amazon='<li>Message: The specified bucket does not exist</li'
 	githubio="<p><strong>There isn't a GitHub Pages site here.</strong></p>".lower()
-	providerslist={'Modulus.io':modulus,'Heroku':heroku,'Github.io':githubio}
+	providerslist={'Modulus.io':modulus,'Heroku':heroku,'Github.io':githubio,'Amazon':amazon}
 
 class STX:
     HEADER = '\033[95m'
