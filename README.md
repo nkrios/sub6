@@ -9,6 +9,9 @@ subdomain take over detector and crawler
 ![Usage](ScreenShotUsg.png]
 -->
 <img src='http://i.imgur.com/5Mxlmlw.png' /> 
+
+
+
  +Usage     
 			
 		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4
