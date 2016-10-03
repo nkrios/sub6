@@ -1,13 +1,15 @@
 # sub6
 subdomain take over detector and crawler 
 
-
+<!--
 /*<img src='http://i.imgur.com/CLgFPKp.png' onerror='alert("deleted");' /> 
 */
 
 
 ![Usage](ScreenShotUsg.png]
-  +Usage     
+-->
+<img src='http://i.imgur.com/undefined.png' /> 
+ +Usage     
 			
 		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4
 	                                             <optional>           <optional>   <optional>
