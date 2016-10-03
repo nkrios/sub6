@@ -17,13 +17,13 @@ subdomain take over detector and crawler
 		    python sub6.py    -i list.txt  -o output.txt       -s phpinfo.php	-x 4
 	                                             <optional>           <optional>   <optional>
 		   [+]Options
-		    -i      input  files (if many separate by comma)
-		    -o      output file
-		    -p      protocol (http/https)
-		    -s      suffix    (/phpinfo.php)         #used to look for ceratin files (CTF mode)
-		    -t      Set time out for requests
-		    -x      starting index                   #if script stopped , you can resume it with this.
-		    -X      To use proxy
+		    -i      input  files                  twitterdomains.txt    #if many separate by comma
+		    -o      output file                   twitterResult.txt
+		    -p      protocol                      http or https
+		    -s      suffix                        phpinfo.php           #used to look for ceratin files (CTF mode)
+		    -t      Set time out for requests     5                     #in seconds
+		    -x      starting index                1:                    #if script stopped , you can resume it with this.
+		    -X      To use proxy                  #prompt
 		    -R      Follow redirects
 		    -H      For Host injection Testing
 		    -O      For open redirect  Testing
