@@ -1,3 +1,4 @@
+
 # !/bin/python
 # Cross-Domain Crawler and subdomain take over detector
 # Author: YasserGersy gersy.ch2@gmail.com
@@ -17,6 +18,33 @@ class DTCT:
 	githubio="<p><strong>There isn't a GitHub Pages site here.</strong></p>".lower()
 	providerslist={'Modulus.io':modulus,'Heroku':heroku,'Github.io':githubio,'Amazon':amazon}
 
+VulnContents = ["<strong>Trying to access your account",
+		"Use a personal domain name",
+		"The request could not be satisfied",
+		"Sorry, We Couldn't Find That Page",
+		"Fastly error: unknown domain",
+		"The feed has not been found",
+		"You can claim it now at",
+		"Publishing platform",                        
+		"There isn't a GitHub Pages site here",                       
+		"No settings were found for this company",
+		"Heroku | No such app",
+		"<title>No such app</title>",                        
+		"You've Discovered A Missing Link. Our Apologies!",
+		"Sorry, couldn&rsquo;t find the status page",                        
+		"NoSuchBucket",
+		"Sorry, this shop is currently unavailable",
+		"<title>Hosted Status Pages for Your Company</title>",
+		"data-html-name=\"Header Logo Link\"",                        
+		"<title>Oops - We didn't find your site.</title>",
+		"class=\"MarketplaceHeader__tictailLogo\"",                        
+		"Whatever you were looking for doesn't currently exist at this address",
+		"The requested URL was not found on this server",
+		"The page you have requested does not exist",
+		"This UserVoice subdomain is currently available!",
+		"but is not configured for an account on our platform",
+		"<title>Help Center Closed | Zendesk</title>",
+		"Sorry, We Couldn't Find That Page Please try again"]	
 class STX:
     HEADER = '\033[95m'
     OKBlue = '\033[94m'
@@ -205,7 +233,11 @@ def Investigate(hostp,indx,AddToResult,trycounter,proto,ForceHTTP,injecthost):
 		if evilhost in source and IsCommonErrorPage(body)==False:
 			printx(STX.yel+('\n [ Vulnerable to Host injection : 60% ]'),0)
 			resultobject=resultobject+'\n'+STX.havlin+'Vulnerable to Host injection'+STX.havlin
-
+		for l in VulnContents:
+			if l in source:
+				printx(STX.yel+('\n [ Vulnerable to Subdomain Take Over : 60% ]'),0)
+				resultobject=resultobject+'\n'+STX.havlin+'Vulnerable to Subdomain Take Over'+STX.havlin
+				
 		if (redirectlink.startswith('http://'+STX.OpenRedirectorLink) or redirectlink.startswith('https://'+STX.OpenRedirectorLink) or '//'+STX.OpenRedirectorLink==redirectlink or STX.OpenRedirectorLink==redirectlink) and STX.OpenRedirector:
 			printx(STX.yel+'\nOpen redirector Detected',0)
 			resultobject=resultobject+'\n Vulnerable to open redirect'
